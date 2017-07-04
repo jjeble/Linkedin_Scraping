@@ -33,17 +33,49 @@ current_letter = ""
 current_num1 = 0
 current_num2 = 0
 current_company = ""
-total_comp = 92256
+total_comp = 63700
 randomvar = 0
 randomvar1 = 0
     
-username = 'jayj2019@gmail.com'
-password = 'clover1'
+##username = 'jayj2019@gmail.com'
+##password = 'clover1'
+##
 
-cj = cookielib.CookieJar()
-opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
-login_data = urllib.urlencode({'session_key' : username, 'session_password' : password})
-opener.open('https://www.linkedin.com/uas/login', login_data)
+##login_data = urllib.urlencode({'session_key' : username, 'session_password' : password})
+##opener.open('https://www.linkedin.com/uas/login', login_data)
+
+import requests
+from bs4 import BeautifulSoup
+
+# Get login form
+
+#cj = cookielib.CookieJar()
+#opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
+URL = 'https://www.linkedin.com/uas/login'
+session = requests.session()
+login_response = session.get('https://www.linkedin.com/uas/login')
+login = BeautifulSoup(login_response.text)
+
+# Get hidden form inputs
+inputs = login.find('form', {'name': 'login'}).findAll('input', {'type': ['hidden', 'submit']})
+
+# Create POST data
+post = {input.get('name'): input.get('value') for input in inputs}
+post['session_key'] = 'jayj2019@gmail.com'
+post['session_password'] = 'clover1'
+
+# Post login
+post_response = session.post('https://www.linkedin.com/uas/login-submit', data=post)
+
+# Get home page
+home_response = session.get('http://www.linkedin.com/nhome')
+home = BeautifulSoup(home_response.text,"html5lib")
+
+#cj = cookielib.CookieJar()
+#opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
+
+
+#print(home)
 
 #print resp.read()
 
@@ -64,7 +96,9 @@ opener.open('https://www.linkedin.com/uas/login', login_data)
 ##sheet1.write(0,3,"Comapny Size")
 ##sheet1.write(0,4,"Company Industry Type")
 
-def data(linklist):
+def data():
+ 
+
             global randomvar1
             global total_comp
             times = 0
@@ -75,102 +109,239 @@ def data(linklist):
             unierr = 0
             error_list = []
             xy = 0
-            randomvar1+=1
-            
-            if randomvar1 == 1:
-                times = 1
-            else:
-                times = 1
+            comp_count = 1000
                 
-            while times < len(linklist):
-            #for j in linklist[times:]:
-                print(times)
-                
-                total_comp+=1
+            for count in range(comp_count,29999999):
+       
+                print("Count: "+str(count))
                 try:
-                    print("Company on page count: ", times)
-                    ecount = ecount+1
-                    #print(j)
-                    #url = "https://www.linkedin.com/company/a-taste-of-pittsburgh-home-and-lifestyle-magazine"
-                    url = linklist[times]
+                    url = 'https://www.linkedin.com/company-beta/'+str(count)+'/'
+                   
                     
-                    req = Request(url, None, {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'})
-                    resp4 = opener.open(req)
-                    cont4 = resp4.read()
-                    doc4 = html.fromstring(cont4)
-                    error =  doc4.xpath('//div[@class="alert error"]/p/strong/text()')
+ #                   req = Request(url, None, {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102Firefox/3.5.5'})
+ #                   urla = urllib2.urlopen(url)
+ #                   resp4 = opener.open(req)
+ #                   cont4 = resp4.read()
+ #                   content = urla.read()
+                    home_response = session.get(url)
+                    home = BeautifulSoup(home_response.text,"lxml-xml")
+                    print("url ,",url)
+                    x = str(home)
+                    doc4 = html.fromstring(x)
+                    #print(content)
                     times+=1
-                    if error:
-                        print("ERRRRRRRRRRRRRROR")
-                       
-                        #errcount+=1
-                    else:
-                        address = ""
-                        website = ""
-                        name = ""
-                        specialities = ""
-                        size = ""
-                        ctype = ""
-                        industry = ""
-                        
-                        #print("hereeee")
-                        success = doc4.xpath('//code[@id="stream-about-section-embed-id-content"]/comment()')
-                        unic = unicode(success[0])
-                        string = (unic)[4:-3]
-                        compname = doc4.xpath('//meta[@property="og:title"]/@content')
-                        string = json.loads(string)
-                        name = str(compname[0])
-                        if 'headquarters' in string.keys():
-                            if 'street1' in string['headquarters'].keys() and len(str(string['headquarters']['street1']))!=0:
-                                address = address + str(string['headquarters']['street1'])+ ", "
-                            if 'street2' in string['headquarters'].keys() and len(str(string['headquarters']['street2']))!=0 :
-                                address = address + str(string['headquarters']['street2'])+ ", "
-                            if 'city' in string['headquarters'].keys() and len(str(string['headquarters']['city']))!=0:
-                                address = address + str(string['headquarters']['city'])+ ", "
-                            if 'state' in string['headquarters'].keys() and len(str(string['headquarters']['state']))!=0:
-                                address = address + str(string['headquarters']['state']) + " "
-                            if 'zip' in string['headquarters'].keys() and len(str(string['headquarters']['zip']))!=0:
-                                address = address + "-"+str(string['headquarters']['zip'])+ ", "
-                            if 'country' in string['headquarters'].keys():
-                                address = address + string['headquarters']['country']
-                            #address = str(string['headquarters'])
-                        else:
-                            address = "Address not available"
-                        if 'website' in string.keys():
-                            website = str(string['website'])
-                        else:
-                            website = "Website not available"
-                        if 'size' in string.keys():
-                            size = str(string['size'])
-                        else:
-                            size = "Company Size not available"
-                        if 'companyType' in string.keys():
-                            ctype = str(string['companyType'])
-                        else:
-                            ctype = "Company Type not available"
-                        if 'industry' in string.keys():
-                            industry = str(string['industry'])
-                        else:
-                            industry = "Industry not available"
-                        print(total_comp)
-                        print "Name: " + name
-                        print "Address: " + address
-                        print "Website: " + website
-                        print "Company Size: " + size
-                        print "Company Type: " + ctype
-                        print "Industry: " + industry
-                        print
-                        print
-                        print
-                        with open("games.txt", "a") as text_file:
-                             text_file.write("\n\n"+ "Name: " + name + "\n")
-                             text_file.write("Address: " + address + "\n")
-                             text_file.write("Website: " + website + "\n")
-                             text_file.write("Company Size: " + size+ "\n")
-                             text_file.write("Industry: " + industry + "\n\n")
-                        with open("games2.txt", "a") as text_file:
-                             text_file.write(name + "^"+address+"^"+website+"^"+size+"^"+industry+"\n")
-                             
+                    #print(home)
+ 
+                    
+ #                  x = home.find(id="datalet-bpr-guid-1103794")
+ #                   x = str(home)
+ #                   tree = html.fromstring(x)
+                    buyers = doc4.xpath('//code/text()')
+                    o = 0
+                    for a in buyers:
+                        try:
+ #                       unic = unicode(a)
+                            y =a[3:-3]
+     #                       jason = json.loads(y)
+ #                           z = ast.literal_eval(y)
+                            
+                            #print(o)
+                            o+=1
+                            if "country:" in y or "industries:" in y or "companyPageUrl:" in y:
+                                ind = y.find("city:")
+                                ind1 = y.find("country:")
+                                industries = y.find("industries:")
+                                name = y.find("name:")
+                                spec = y.find("specialities:")
+                                line1_index = y.find("line1:")
+                                line2_index = y.find("line2:")
+                                site_index = y.find("companyPageUrl:")
+                                postal_index = y.find("postalCode:")
+                                type_index = y.find("type:")
+                                #print(industries)
+                                
+                                city = ""
+                                country = ""
+                                indus = ""
+                                nam= ""
+                                speci = ""
+                                line1 = ""
+                                line2 = ""
+                                site = ""
+                                postal = ""
+                                typec = ""
+                                for i in y[ind:]:
+                                    if i == ",":
+                                        break
+                                    city = city+i;
+                                for i in y[ind1:]:
+                                    if i == ",":
+                                        break
+                                    country = country+i;
+                                for i in y[industries:]:
+                                    if i == "]":
+                                        break
+                                    indus = indus+i
+                                for i in y[name:]:
+                                    if i == ",":
+                                        break
+                                    nam = nam+i;
+                                for i in y[spec:]:
+                                    if i == "]":
+                                        break
+                                    speci = speci+i;
+                                if line1_index != -1:
+                                    for i in y[line1_index:]:
+                                        if i == "$":
+                                            break
+                                        line1 = line1+i;
+                                if line2_index != -1:
+                                    for i in y[line2_index:]:
+                                        if i == ",":
+                                            break
+                                        line2 = line2+i;
+                                if site_index != -1:
+                                    for i in y[site_index:]:
+                                        if i == ",":
+                                            break
+                                        site = site+i;
+                                if postal_index != -1:
+                                    for i in y[postal_index:]:
+                                        if i == ",":
+                                            break
+                                        postal = postal+i
+                                if type_index != -1:
+                                    for i in y[type_index:]:
+                                        if i == ",":
+                                            break
+                                        typec = typec+i
+                                
+                                                       #print "Name: " + name
+##                        print "Address: " + address
+##                        print "Website: " + website
+##                        print "Company Size: " + sizeajdnajbffnfqnfwpnf
+##                        print "Company Type: " + ctype
+##                        print "Industry: " + indusfjfqfwfiffnifniw
+                            
+                                nam = nam[5:]
+                                if indus[10] == ",":
+                                    indus = "Industry not available"
+                                else:
+                                    indus = indus[12:]
+                                if len(speci) == 14:
+                                    speci = "Specializations not available"
+                                else:
+                                    speci = speci[14:]
+                                if site == "":
+                                    site = "Website not available"
+                                else:
+                                    site = site[15:]
+                                if typec[5:25] == "com.linkedin.voyager":
+                                    typec = "Company Type is not available"
+                                else:
+                                    typec = typec[5:]
+                                address = line1[6:]+ line2[6:]+city[5:]+","+country[8:]+"-"+postal[11:]
+                               
+                                print("Name: "+nam)                                   
+                                print("Address: "+address)
+                                print("Industry: "+indus)
+                                if speci == "":
+                                    speci = "Specializations not available"
+                                print("Specializations: "+speci)
+                                print("Website: "+site)
+                                print("Company Type: "+typec)
+                                with open("companies.txt", "a") as text_file:
+                                     text_file.write(nam + "^"+address+"^"+indus+"^"+speci+"^"+site+"^"+typec+"\n")
+                                print()
+                                print()
+                           # print()
+                        except SyntaxError:
+                            print("syntax")
+                            pass
+ #                   times+=1      
+
+            
+                    
+                    
+            
+# -> u'2 rooms \xb7 USD 0'
+                    
+                      
+  
+                   # print(buyers)
+ #                   error =  home.xpath('//div[@class="alert error"]/p/strong/text()')
+ 
+##                    if error:
+##                        print("ERRRRRRRRRRRRRROR")
+##                       
+##                        #errcount+=1
+##                    else:
+##                        address = ""
+##                        website = ""
+##                        name = ""
+##                        specialities = ""
+##                        size = ""
+##                        ctype = ""
+##                        industry = ""
+##                        
+##                        print("hereeee")
+##                        success = doc4.xpath('//code[@id="stream-about-section-embed-id-content"]/comment()')
+##                        unic = unicode(success[0])
+##                        string = (unic)[4:-3]
+##                        compname = doc4.xpath('//meta[@property="og:title"]/@content')
+##                        string = json.loads(string)
+##                        name = str(compname[0])
+##                        if 'headquarters' in string.keys():
+##                            if 'street1' in string['headquarters'].keys() and len(str(string['headquarters']['street1']))!=0:
+##                                address = address + str(string['headquarters']['street1'])+ ", "
+##                            if 'street2' in string['headquarters'].keys() and len(str(string['headquarters']['street2']))!=0 :
+##                                address = address + str(string['headquarters']['street2'])+ ", "
+##                            if 'city' in string['headquarters'].keys() and len(str(string['headquarters']['city']))!=0:
+##                                address = address + str(string['headquarters']['city'])+ ", "
+##                            if 'state' in string['headquarters'].keys() and len(str(string['headquarters']['state']))!=0:
+##                                address = address + str(string['headquarters']['state']) + " "
+##                            if 'zip' in string['headquarters'].keys() and len(str(string['headquarters']['zip']))!=0:
+##                                address = address + "-"+str(string['headquarters']['zip'])+ ", "
+##                            if 'country' in string['headquarters'].keys():
+##                                address = address + string['headquarters']['country']
+##                            #address = str(string['headquarters'])
+##                        else:
+##                            address = "Address not available"
+##                        if 'website' in string.keys():
+##                            website = str(string['website'])
+##                        else:
+##                            website = "Website not available"
+##                        if 'size' in string.keys():
+##                            size = str(string['size'])
+##                        else:
+##                            size = "Company Size not available"
+##                        if 'companyType' in string.keys():
+##                            ctype = str(string['companyType'])
+##                        else:
+##                            ctype = "Company Type not available"
+##                        if 'industry' in string.keys():
+##                            industry = str(string['industry'])
+##                        else:
+##                            industry = "Industry not available"
+##                        print(total_comp)
+##                        print "Name: " + name
+##                        print "Address: " + address
+##                        print "Website: " + website
+##                        print "Company Size: " + size
+##                        print "Company Type: " + ctype
+##                        print "Industry: " + industry
+##                        print
+##                        print
+##                        print
+##                        with open("games.txt", "a") as text_file:
+##                             text_file.write("\n\n"+ "Name: " + name + "\n")
+##                             text_file.write("Address: " + address + "\n")
+##                             text_file.write("Website: " + website + "\n")
+##                             text_file.write("Company Size: " + size+ "\n")
+##                             text_file.write("Industry: " + industry + "\n\n")
+##                        with open("games1.txt", "a") as text_file:
+##                             text_file.write(name + "^"+address+"^"+website+"^"+size+"^"+industry+"\n")
+##                             
                         
             
 
@@ -239,17 +410,15 @@ def data(linklist):
     ##                    print dicta
     ##                    ecount+=1
                 
-                except HTTPError:
-                    print("prrrrrrrrrrrroooooooooobbbbbbbbbbllllllllllllleeemmmmmm")
-                    #errcount+=1
-                    company_errors.append(url)
-                    
-                    continue
+##                except HTTPError:
+##                    print("HTTP ")
+##                    #errcount+=1
+##                    company_errors.append(url)
+##                    
+##                    continue
                     
                 except UnicodeEncodeError:
 
-                    unierr+=1
-                    print("UNIIIIIIICODDDDDDE",unierr)
                     pass
 
                 except IndexError:
@@ -258,124 +427,131 @@ def data(linklist):
 
 
 
-def crawl():
-    global alphanum1_errors
-    global alphanum2_errors
-    global alpha_errors
-    global current_letter
-    global current_num1
-    global current_num2
-    global randomvar
-    opener1 = ""
-    i = 0
-    j = 0
-    htmla =""
-    company_list= []
-    url_comp_list = []
-    linklist = []
-    count  = 1
-    xy = 1
-     
-    randomvar+=1
-    if randomvar == 1:
-        xy = 97
-    letter_list = ['b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
-    
-    for letter in letter_list:
-        current_letter = letter
-        print("Current letter: ",current_letter)
-        try:
-            url1 = 'https://www.linkedin.com/directory/companies-' + letter+'/'
-            resp1 = opener.open(url1)
-            cont1 = resp1.read()
-            doc1 = html.fromstring(cont1)
-            companies =  doc1.xpath('//li[@class="content"]/a/text()')
-            print(len(companies))
-            for count in range(xy,len(companies)):
-                try:
-                    print("First number : ",count)
-                    i = i+1
-                    url2 = 'https://www.linkedin.com/directory/companies-' + letter+'-'+str(count)+'/'
-                    #print(url2)
-                    resp2 = opener.open(url2)
-                    cont2 = resp2.read()
-                    doc2 = html.fromstring(cont2)
-                    companies1 =  doc2.xpath('//li[@class="content"]/a/text()')
-                    companies = companies + companies1
-                    if randomvar == 1:
-                        randomvar+=1
-                        count1 = 6
-                        while(count1<len(companies1)):
-                        #for count1 in range(28,):
-                            
-                            try:
-                                print("Second number: ", count1)
-                                print(alpha_errors)
-                                print(company_errors)
-                                print(alphanum1_errors)
-                                print(alphanum2_errors)
-                                j+=1
-                                url3 = 'https://www.linkedin.com/directory/companies-' + letter+'-'+str(count)+'-'+str(count1)+'/'
-                                print(url3)
-                                
-                                    
-                                resp3 = opener.open(url3)
-                                cont3 = resp3.read()
-                                doc3 = html.fromstring(cont3)
-                                companies2 =  doc3.xpath('//li[@class="content"]/a/@href')
-                                linklist=companies2
-                                data(linklist)
-                                count1+=1
-                                
-                            except HTTPError:
-                                print("prrrrrrrrrrrrobbbbbbblemm2222")
-                                alphanum2_errors.append(url3)
-                                continue
-                                
-                                
-                    
-                   
-                    else:
-                        count1 = 1
-                        while(count1<len(companies1)):
-                        #for count1 in range(1,len(companies1)):
-                            try:
-                                print("Second number: ", count1)
-                                print(alpha_errors)
-                                print(company_errors)
-                                print(alphanum1_errors)
-                                print(alphanum2_errors)
-                                j+=1
-                                url3 = 'https://www.linkedin.com/directory/companies-' + letter+'-'+str(count)+'-'+str(count1)+'/'
-                                print(url3)
-                                
-                                resp3 = opener.open(url3)
-                                cont3 = resp3.read()
-                                doc3 = html.fromstring(cont3)
-                                companies2 =  doc3.xpath('//li[@class="content"]/a/@href')
-                                linklist=companies2
-                                data(linklist)
-                                count1+=1
-                            except HTTPError:
-                                alphanum2_errors.append(url3)
-                                continue
-                except HTTPError:
-                    alphanum1_errors.append(url2)
-                    print("me1")
-                    pass
-                    #if j == 2:
-                       # break
-                #if i == 1:
-                    #break
-            #for k in link_list:
-                #print(k)
-            print("success")
-        except HTTPError:
-            alpha_errors.append(url1)
-            print("me")
-            continue
-    
-    
+##def crawl():
+##    global alphanum1_errors
+##    global alphanum2_errors
+##    global alpha_errors
+##    global current_letter
+##    global current_num1
+##    global current_num2
+##    global randomvar
+##    opener1 = ""
+##    i = 0
+##    j = 0
+##    htmla =""
+##    company_list= []
+##    url_comp_list = []
+##    linklist = []
+##    count  = 1
+##    xy = 1
+##     
+##    randomvar+=1
+##    if randomvar == 1:
+##        xy = 56
+##    letter_list = ['b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+##    
+##    for letter in letter_list:
+##        current_letter = letter
+##        print("Current letter: ",current_letter)
+##        #try:
+###            url1 = 'https://www.linkedin.com/directory/companies-' + letter+'/'
+## #       url1 = 'https://www.linkedin.com/company-beta/19999997/'
+## #       linklist.append(url1)
+##        linklist = ['https://www.linkedin.com/company-beta/1035/','https://www.linkedin.com/company-beta/19999997/','https://www.linkedin.com/company-beta/19999996/','https://www.linkedin.com/company-beta/19999995/','https://www.linkedin.com/company-beta/19999994/','https://www.linkedin.com/company-beta/19999993/']
+##        data(linklist)
+##            
+##            
+####            resp1 = opener.open(url1)
+####            print("thru")
+####            cont1 = resp1.read()
+####            doc1 = html.fromstring(cont1)
+####            companies =  doc1.xpath('//li[@class="content"]/a/text()')
+####            print(len(companies))
+####            for count in range(xy,len(companies)):
+####                try:
+####                    print("First number : ",count)
+####                    i = i+1
+####                    url2 = 'https://www.linkedin.com/directory/companies-' + letter+'-'+str(count)+'/'
+####                    #print(url2)
+####                    resp2 = opener.open(url2)
+####                    cont2 = resp2.read()
+####                    doc2 = html.fromstring(cont2)
+####                    companies1 =  doc2.xpath('//li[@class="content"]/a/text()')
+####                    companies = companies + companies1
+####                    if randomvar == 1:
+####                        randomvar+=1
+####                        count1 = 71
+####                        while(count1<len(companies1)):
+####                        #for count1 in range(28,):
+####                            
+####                            try:
+####                                print("Second number: ", count1)
+####                                print(alpha_errors)
+####                                print(company_errors)
+####                                print(alphanum1_errors)
+####                                print(alphanum2_errors)
+####                                j+=1
+####                                url3 = 'https://www.linkedin.com/directory/companies-' + letter+'-'+str(count)+'-'+str(count1)+'/'
+####                                print(url3)
+####                                
+####                                    
+####                                resp3 = opener.open(url3)
+####                                cont3 = resp3.read()
+####                                doc3 = html.fromstring(cont3)
+####                                companies2 =  doc3.xpath('//li[@class="content"]/a/@href')
+####                                linklist=companies2
+####                                data(linklist)
+####                                count1+=1
+####                                
+####                            except HTTPError:
+####                                print("prrrrrrrrrrrrobbbbbbblemm2222")
+####                                alphanum2_errors.append(url3)
+####                                continue
+####                                
+####                                
+####                    
+####                   
+####                    else:
+####                        count1 = 1
+####                        while(count1<len(companies1)):
+####                        #for count1 in range(1,len(companies1)):
+####                            try:
+####                                print("Second number: ", count1)
+####                                print(alpha_errors)
+####                                print(company_errors)
+####                                print(alphanum1_errors)
+####                                print(alphanum2_errors)
+####                                j+=1
+####                                url3 = 'https://www.linkedin.com/directory/companies-' + letter+'-'+str(count)+'-'+str(count1)+'/'
+####                                print(url3)
+####                                
+####                                resp3 = opener.open(url3)
+####                                cont3 = resp3.read()
+####                                doc3 = html.fromstring(cont3)
+####                                companies2 =  doc3.xpath('//li[@class="content"]/a/@href')
+####                                linklist=companies2
+####                                data(linklist)
+####                                count1+=1
+####                            except HTTPError:
+####                                alphanum2_errors.append(url3)
+####                                continue
+####                except HTTPError:
+####                    alphanum1_errors.append(url2)
+####                    print("me1")
+####                    pass
+####                    #if j == 2:
+####                       # break
+####                #if i == 1:
+####                    #break
+####            #for k in link_list:
+####                #print(k)
+####            print("success")
+####        except HTTPError:
+####            alpha_errors.append(url1)
+####            print("me")
+####            continue
+####    
+##    
 
 
 
@@ -511,8 +687,15 @@ def crawl():
     
 
 def main():
-    crawl()
+    data()
+    
 
 if __name__ == '__main__':
     print("executing")
     main()
+
+
+
+
+
+    
